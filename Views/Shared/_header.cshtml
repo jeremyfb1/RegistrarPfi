@@ -1,0 +1,143 @@
+﻿@{
+    string controller = HttpContext.Current.Request.RequestContext.RouteData.Values["controller"].ToString().ToLower();
+    string action = HttpContext.Current.Request.RequestContext.RouteData.Values["action"].ToString().ToLower();
+
+    bool search = Session["Search"] != null ? (bool)Session["Search"] : false;
+    string searchString = Session["SearchString"] != null ? (string)Session["SearchString"] : "";
+
+    int currentId = Session["CurrentId"] != null ? (int)Session["CurrentId"] : 0;
+    string currentTitle = Session["currentTitle"] != null ? (string)Session["currentTitle"] : "";
+
+    string pageTitle = ViewBag.PageTitle;
+
+
+    bool userConnected = Models.User.ConnectedUser != null;
+    bool userIsAdmin = userConnected ? Models.User.ConnectedUser.IsAdmin : false;
+    bool userCanWrite = userConnected ? Models.User.ConnectedUser.CanWrite : false;
+
+    string index = RouteConfig.DefaultAction();
+
+}
+
+<div class="section roundedBorder">
+    <div class="headerMenu" style="display: flex; align-items: center; width: 100%;">
+        <a class="siteIcon" href="/@controller/list" ></a>
+
+        @switch (action)
+        {
+            case "list":
+                <div class="top-nav-links" style="margin-left: 15px; display: flex; gap: 10px; align-items: baseline; font-size: 1.2em;">
+                    <a href="/Students/List" style="text-decoration: none; color: @(controller == "students" ? "#333" : "gray"); font-weight: @(controller == "students" ? "bold" : "normal");">Étudiants</a>
+                    <a href="/Courses/List" style="text-decoration: none; color: @(controller == "courses" ? "#333" : "gray"); font-weight: @(controller == "courses" ? "bold" : "normal");">Cours</a>
+                    <a href="/Teachers/List" style="text-decoration: none; color: @(controller == "teachers" ? "#333" : "gray"); font-weight: @(controller == "teachers" ? "bold" : "normal");">Profs</a>
+                </div>
+
+                <div id="mainMenuPanel" class="menu ms-auto">
+                    @if (userCanWrite)
+                    {
+                        <a href="/@controller/Create" class="cmdIcon fa fa-circle-plus" style="color: #0d6efd;" title="Ajouter..."></a>
+                    }
+                    <a href="/@controller/ToggleSearch" id="cmdToggleSearch" class="cmdIcon fa fa-search" style="color: #0d6efd;" title="Recherche..."></a>
+
+                    <div id="menu" class="dropdown ms-auto" style="display: inline-block;">
+                        <div data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;">
+                            <i class="cmdIcon fa fa-bars" style="color: #0d6efd;" title="Menu"></i>
+                        </div>
+                        <div class="dropdown-menu noselect" id="DDMenu">
+                            <div class="dropdown-item item-layout">
+                                <i class="menuIcon fa fa-address-card"></i>
+                                <a href="/Accounts/EditProfil">Profil...</a>
+                            </div>
+                            <div class="dropdown-item item-layout">
+                                <i class="menuIcon fa fa-sign-out"></i>
+                                <a href="/Accounts/Logout">Déconnexion...</a>
+                            </div>
+
+                            @if (userIsAdmin)
+                            {
+                                <div class="dropdown-divider"></div>
+                                <div class="dropdown-item item-layout">
+                                    <i class="menuIcon fa fa-users"></i>
+                                    <a href="/Accounts/ManageUsers">Gestion des usagers...</a>
+                                </div>
+                                <div class="dropdown-item item-layout">
+                                    <i class="menuIcon fa fa-calendar-days"></i>
+                                    <a href="/Accounts/LoginsJournal">Historique de connexions...</a>
+                                </div>
+                                <div class="dropdown-item item-layout">
+                                    <i class="menuIcon fa fa-gear"></i>
+                                    <a href="/Accounts/EventsJournal">Journal d'activités...</a>
+                                </div>
+                            }
+
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-item item-layout">
+                                <i class="menuIcon fa fa-info-circle"></i>
+                                <a href="/Home/About">À propos...</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                break;
+
+            case "details":
+                <div class="pageTitle">@pageTitle</div>
+                <div id="mainMenuPanel" class="menu ms-auto">
+                    @if (userCanWrite)
+                    {
+                        <a href="/@controller/Edit/@currentId" class="cmdIcon fa fa-pen-to-square" title="Modifier..."></a>
+                        <i class="cmdIcon fa fa-trash-can"
+                           title="Effacer"
+                           onclick="bootbox.confirm(`<b style=color:red>Effacer ? </b>`, function(result){ if (result) window.location = '/@controller/Delete/@currentId'; })">
+                        </i>
+                    }
+                    <a href="/@controller/List" class="cmdIcon fa fa-square-xmark" title="Retour"></a>
+                </div>
+                break;
+
+            case "create":
+                <div class="pageTitle">@pageTitle</div>
+                if (userCanWrite)
+                {
+                    <div id="mainMenuPanel" class="menu ms-auto">
+                        <i class="cmdIcon submitCmd fa fa-circle-check" title="Soumettre" onclick="document.getElementById('submit').click()"></i>
+                        <a href="/@controller/List" class="cmdIcon fa fa-square-xmark" title="Annuler"></a>
+                    </div>
+                }
+                break;
+            case "edit":
+                <div class="pageTitle">@pageTitle</div>
+                if (userCanWrite)
+                {
+                    <div id="mainMenuPanel" class="menu ms-auto">
+                        <i class="cmdIcon submitCmd fa fa-circle-check" title="Soumettre" onclick="document.getElementById('submit').click()"></i>
+                        <a href="/@controller/List" class="cmdIcon fa fa-square-xmark" title="Annuler"></a>
+                    </div>
+                }
+                break;
+
+            case "subscribe":
+            case "editprofil":
+                <div class="pageTitle">@pageTitle</div>
+                <div id="mainMenuPanel" class="menu ms-auto">
+                    <i class="cmdIcon submitCmd fa fa-circle-check" title="Soumettre" onclick="document.getElementById('submit').click()"></i>
+                    <a class="cmdIcon fa fa-square-xmark" title="Annuler" onclick="history.back()"></a>
+                </div>
+                break;
+
+            case "loginsjournal":
+            case "eventsjournal":
+            case "manageusers":
+            case "about":
+                <div class="pageTitle">@pageTitle</div>
+                <div id="mainMenuPanel" class="menu ms-auto">
+                    <a href="@index" class="cmdIcon fa fa-square-xmark" title="Retour"></a>
+                </div>
+                break;
+
+            default:
+                <div class="pageTitle">@pageTitle</div>
+                break;
+        }
+    </div>
+</div>

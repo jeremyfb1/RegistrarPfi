@@ -1,0 +1,89 @@
+@model Models.Course
+
+
+@if (Model == null)
+{
+    <div class="alert alert-danger">Cours introuvable.</div>
+    return;
+}
+
+<div style="margin-bottom: 15px;">
+    <h2 style="margin: 0; font-size: 1.6em; color: #333; font-weight: normal;">@Model.Code</h2>
+    <div style="font-size: 1.2em; color: #333; margin: 8px 0;">Session @Model.Session</div>
+    <h3 style="margin: 0; font-size: 1.3em; font-weight: bold; color: #333;">@Model.Title</h3>
+</div>
+
+<hr style="border: solid; border-top: 2px solid #ddd; margin-bottom: 20px;" />
+
+<h3 style="font-size: 1.5em; color: #333; margin-bottom: 15px;">Étudiants inscrits</h3>
+
+@{
+    var registrations = DAL.DB.Registrations.ToList()
+                        .Where(r => r.CourseId == Model.Id)
+                        .OrderByDescending(r => r.Year)
+                        .ToList();
+
+    var cohorts = registrations.GroupBy(r => r.Year).ToList();
+}
+
+@if (cohorts.Any())
+{
+    int index = 0;
+    foreach (var cohort in cohorts)
+    {
+        int currentYear = cohort.Key;
+        string open = index == 0 ? "open" : "";
+
+        string teacherName = "";
+        int teacherId = 0;
+        var allocation = DAL.DB.Allocations.ToList().FirstOrDefault(a => a.CourseId == Model.Id && a.Year == currentYear);
+
+        if (allocation != null)
+        {
+            var teacher = DAL.DB.Teachers.Get(allocation.TeacherId);
+            if (teacher != null)
+            {
+                teacherName = teacher.LastName + " " + teacher.FirstName;
+                teacherId = teacher.Id;
+            }
+        }
+
+        <details id="details_cohort_@currentYear" @open class="cohort-details" style="margin-bottom: 5px;">
+            <summary class="cohort-summary" style="display: list-item;">
+                Cohorte @currentYear
+                @if (!string.IsNullOrEmpty(teacherName))
+                {
+                    <span style="font-weight: normal;"> - </span>
+                    <a href="/Teachers/Details/@teacherId" style="color: #007bff; text-decoration: none; font: bold;">@teacherName</a>
+                }
+            </summary>
+
+            <div style="border: 1px solid #ddd; border-top: none; padding: 5px 0; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;">
+                @{
+                    // Extraire les étudiants de la cohorte et les trier par Nom de famille
+                    var cohortStudents = cohort.Select(r => DAL.DB.Students.Get(r.StudentId))
+                                               .Where(s => s != null)
+                                               .OrderBy(s => s.LastName)
+                                               .ThenBy(s => s.FirstName)
+                                               .ToList();
+                }
+
+                @foreach (var student in cohortStudents)
+                {
+                    <a href="/Students/Details/@student.Id" class="student-row" style="display: grid; grid-template-columns: 95px auto; padding: 4px 15px; align-items: center; text-decoration: none;">
+                        <span class="studentCode" >@student.Code</span>
+                        <span >@student.LastName @student.FirstName</span>
+                    </a>
+                }
+            </div>
+        </details>
+
+        index++;
+    }
+}
+else
+{
+    <div style="padding: 15px; border: 1px dashed #ccc; border-radius: 4px; color: #777; background-color: #fafafa;">
+        <i class="fa fa-info-circle"></i> Aucun étudiant n'est inscrit à ce cours pour le moment.
+    </div>
+}

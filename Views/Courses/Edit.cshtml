@@ -1,0 +1,17 @@
+@model Models.Course
+
+@{
+    ViewBag.Action = "Edit";
+    ViewBag.PageTitle = "Cours - Modification";
+    ViewBag.Creating = false;
+    Html.RenderPartial("CourseForm");
+}
+
+@section Scripts {
+    <script>
+        $(() => {
+            initFormValidation();
+        });
+    </script>
+    <script src="~/Scripts/selections.js"></script>
+}

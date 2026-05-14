@@ -1,0 +1,16 @@
+@model Models.Course
+
+@{
+    ViewBag.Action = "Create";
+    ViewBag.PageTitle = "Cours - Ajout";
+    ViewBag.Creating = true;
+    Html.RenderPartial("CourseForm");
+}
+
+@section Scripts {
+    <script>
+        $(() => {
+            initFormValidation();
+        });
+    </script>
+}

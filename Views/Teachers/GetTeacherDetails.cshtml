@@ -1,0 +1,81 @@
+@model Models.Teacher
+
+@if (Model == null)
+{
+    <div class="alert alert-danger">Professeur introuvable.</div>
+    return;
+}
+
+<details id="details_teacher_info" class="cohort-details" open style="margin-bottom: 15px;">
+    <summary class="cohort-summary" style="display: list-item;">
+        <i class="fa fa-chalkboard-user" style="margin-left: 5px; margin-right: 5px;"></i>@Model.FullName
+    </summary>
+
+    <div style="padding: 12px 15px; line-height: 1.8; color: #333; border: 1px solid #ddd; border-top: none; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;">
+        <div style="margin-bottom: 4px;"><i class="fa fa-barcode" style="width: 25px; text-align: center; color: #555;"></i> @Model.Code</div>
+        <div style="margin-bottom: 4px;"><i class="fa fa-phone" style="width: 25px; text-align: center; color: #555;"></i> @Model.Phone</div>
+        <div style="margin-bottom: 15px;"><i class="fa fa-paper-plane" style="width: 25px; text-align: center; color: #555;"></i> <a href="mailto:@Model.Email" style="color: inherit; text-decoration: none;">@Model.Email</a></div>
+
+        @{
+            double seniority = (DateTime.Now - Model.StartDate).TotalDays / 365.2425;
+            string seniorityStr = seniority.ToString("F1", new System.Globalization.CultureInfo("fr-CA"));
+        }
+        <div style="margin-bottom: 4px;">Embauché le @Model.StartDate.ToString("d MMMM yyyy", new System.Globalization.CultureInfo("fr-CA"))</div>
+        <div style="margin-bottom: 15px;">@seniorityStr ans d'ancienneté</div>
+
+        <div>
+            <img src="@Model.Avatar" alt="Avatar de @Model.FullName" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 1px solid #ccc;" onerror="this.style.display='none'" />
+        </div>
+    </div>
+</details>
+
+<h3 style="margin-top: 20px; margin-bottom: 10px; color: #333; font-size: 1.4em;">Allocations</h3>
+
+@{
+    var allocations = Model.Allocations.OrderByDescending(a => a.Year).ToList();
+    var cohorts = allocations.GroupBy(a => a.Year).ToList();
+}
+
+@if (cohorts.Any())
+{
+    int index = 0;
+    foreach (var cohort in cohorts)
+    {
+        int currentYear = cohort.Key;
+        string open = index == 0 ? "open" : "";
+
+        <details id="details_alloc_@currentYear" @open class="cohort-details" style="margin-bottom: 5px;">
+            <summary class="cohort-summary" style="display: list-item;">
+                @currentYear
+            </summary>
+
+            <div style="border: 1px solid #ddd; border-top: none; padding: 5px 0; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;">
+                @{
+                    // On récupère les cours
+                    var allocatedCourses = cohort.Select(a => a.Course ?? DAL.DB.Courses.Get(a.CourseId))
+                                                 .Where(c => c != null)
+                                                 .OrderBy(c => c.Session)
+                                                 .ThenBy(c => c.Code)
+                                                 .ToList();
+                }
+
+                @foreach (var course in allocatedCourses)
+                {
+                    <a href="/Courses/Details/@course.Id" class="student-row" style="display: grid; grid-template-columns: 35px 115px auto; padding: 4px 15px; border-bottom: none; align-items: center; text-decoration: none;">
+                        <span style="color: gray;">[@course.Session]</span>
+                        <span class="courseCode" style="color: #0056b3;">@course.Code</span>
+                        <span style="color: #333;">@course.Title</span>
+                    </a>
+                }
+            </div>
+        </details>
+
+        index++;
+    }
+}
+else
+{
+    <div style="padding: 15px; border: 1px dashed #ccc; border-radius: 4px; color: #777; background-color: #fafafa;">
+        <i class="fa fa-info-circle"></i> Ce professeur n'a aucune allocation de cours pour le moment.
+    </div>
+}

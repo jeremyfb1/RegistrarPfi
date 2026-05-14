@@ -1,0 +1,169 @@
+﻿using DAL;
+using Models;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using static Controllers.AccessControl;
+
+namespace Controllers
+{
+    public class TeachersController : Controller
+    {
+        private void InitSessionVariables()
+        {
+            if (Session["CurrentTeacherId"] == null) Session["CurrentTeacherId"] = 0;
+        }
+
+
+        public ActionResult List()
+        {
+            return View();
+        }
+        public ActionResult GetTeachers(bool forceRefresh = false, string searchString = "")
+        {
+            try
+            {
+                bool searchChanged = Session["LastSearch"]?.ToString() != searchString;
+
+                if (DB.Users.HasChanged ||  DB.Teachers.HasChanged || forceRefresh || searchChanged)
+                {
+                    Session["LastSearch"] = searchString;
+                    var teachers = DB.Teachers.ToList();
+
+                    if (!string.IsNullOrEmpty(searchString))
+                    {
+                        searchString = searchString.ToLower();
+                        teachers = teachers.Where(t => t.FullName.ToLower().Contains(searchString) || t.Code.ToLower().Contains(searchString)).ToList();
+                    }
+
+                    ViewBag.Search = searchString;
+
+                    return PartialView(teachers);
+                }
+
+                return Content("");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                return Content("Erreur interne " + ex.Message);
+            }
+        }
+
+        public ActionResult Details(int id)
+        {
+            InitSessionVariables();
+            ViewBag.PageTitle = "Prof - Détails";
+            Session["CurrentTeacherId"] = id;
+            Session["CurrentId"] = id;
+            return View();
+        }
+
+        public ActionResult GetTeacherDetails(bool forceRefresh = false)
+        {
+            try
+            {
+                InitSessionVariables();
+                int teacherId = (int)Session["CurrentTeacherId"];
+                Teacher teacher = DB.Teachers.Get(teacherId);
+
+                if (DB.Users.HasChanged || DB.Teachers.HasChanged ||
+                    DB.Allocations.HasChanged || DB.Courses.HasChanged || forceRefresh)
+                {
+                    if (teacher != null)
+                    {
+                        return PartialView(teacher);
+                    }
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return Content("Erreur interne " + ex.Message);
+            }
+        }
+
+        [UserAccess(Access.Write)]
+        public ActionResult Edit()
+        {
+            int id = Session["CurrentTeacherId"] != null ? (int)Session["CurrentTeacherId"] : 0;
+            if (id == 0) return RedirectToAction("List");
+
+            Teacher teacher = DB.Teachers.Get(id);
+
+            if (teacher != null)
+            {
+
+                Session["code"] = teacher.Code;
+                ViewBag.Allocations = teacher.NextSessionCoursesToSelectList;
+                var nextSessionCourses = DB.Courses.ToList()
+                    .Where(c => Models.NextSession.ValidSessions.Contains(c.Session))
+                    .OrderBy(c => c.Session)
+                    .ToList();
+
+                ViewBag.Courses = SelectListUtilities<Course>.Convert(nextSessionCourses, "Caption");
+
+                return View(teacher);
+            }
+
+            return RedirectToAction("List");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken()]
+        [UserAccess(Access.Write)]
+        public ActionResult Edit(Teacher teacher, List<int> selectedCoursesId)
+        {
+
+            teacher.Id = (int)Session["CurrentTeacherId"];
+            teacher.Code = (string)Session["code"];
+            if (teacher.IsValid())
+            {
+                DB.Teachers.Update(teacher);
+                teacher.UpdateAllocations(selectedCoursesId);
+
+                return RedirectToAction("Details", new { id = teacher.Id });
+            }
+
+            return Redirect("/Accounts/Login?message=Accès illégal! &success=false");
+        }
+
+        public ActionResult Create()
+        {
+            return View(new Teacher());
+        }
+        [HttpPost]
+        /* Install anti forgery token verification attribute.
+         * the goal is to prevent submission of data from a page 
+         * that has not been produced by this application*/
+        [ValidateAntiForgeryToken()]
+        [UserAccess(Models.Access.Write)]
+        public ActionResult Create(Teacher teacher)
+        {
+            if (ModelState.IsValid)
+            {
+                teacher.genererCode();
+                DB.Teachers.Add(teacher);
+                return RedirectToAction("List");
+            }
+
+            ViewBag.PageTitle = "Prof - Ajout";
+            return View(teacher);
+        }
+
+
+        [UserAccess(Models.Access.Write)]
+        public ActionResult Delete(int id)
+        {
+            Teacher teacher = DB.Teachers.Get(id);
+            teacher.DeleteAllAllocations();
+            teacher.DeleteNextSessionAllocations();
+            DB.Teachers.Delete(id);
+
+            return RedirectToAction("List");
+        }
+    }
+}

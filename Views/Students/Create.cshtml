@@ -1,0 +1,16 @@
+@model Models.Student
+
+@{
+    ViewBag.Action = "Create";
+    ViewBag.PageTitle = "Étudiant - Ajout";
+    ViewBag.Creating = true; 
+    Html.RenderPartial("StudentForm");
+}
+
+@section Scripts {
+    <script>
+        $(() => {
+            initFormValidation();
+        });
+    </script>
+}

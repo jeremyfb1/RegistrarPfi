@@ -1,0 +1,67 @@
+﻿@{
+    ViewBag.Title = "Liste des étudiants";
+    Session["Search"] = true;
+}
+
+<div id="studentsContainer"></div>
+
+
+
+@section Scripts {
+    <script>
+        function RestoreDetailsState() {
+            //////////////////////////////////////////////////////////
+            /// Install event handler
+            //////////////////////////////////////////////////////////
+
+            $("details").off();
+            $("details").on('toggle', function () {
+                let details_dom = $(this)[0];
+                if (details_dom != undefined) {
+                    // Save detail state
+                    localStorage.setItem(details_dom.id, details_dom.open);
+                }
+            });
+            // Restore state of each details tags
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                // target only keys that contain "details" string
+                if (key.indexOf("details") > -1) {
+                    let details_dom = $("#" + key)[0];
+                    if (details_dom != undefined)
+                        // all values in localstorage are stored as string
+                        details_dom.open = localStorage.getItem(key) == "true";
+                }
+            }
+        }
+
+        $(() => {
+            let studentsListAutoRefreshPanel =
+                new AutoRefreshedPanel(
+                    "studentsContainer",
+                    "/Students/GetStudents",
+                    5,
+                    RestoreDetailsState);
+
+            let keywordsOnchangeTimer = null;
+
+            $("#searchInput").on('keyup', function () {
+                clearTimeout(keywordsOnchangeTimer);
+                /* delay request by 0.5 seconds */
+                keywordsOnchangeTimer = setTimeout(() => {
+                    window.location = "/Students/SetSearchString?value=" + $("#searchInput").val();
+                }, 1000 /* 1 seconds */);
+            });
+            $("#searchInput").on('search', function () { /* click on clear */
+                clearTimeout(keywordsOnchangeTimer);
+                window.location = "/Students/SetSearchString?value=" + $("#searchInput").val();
+            });
+            $("#searchInput").on("focus", function () {
+                studentsListAutoRefreshPanel.pause();
+            });
+            $("#searchInput").on("blur", function () {
+                studentsListAutoRefreshPanel.restart();
+            });
+        });
+    </script>
+}

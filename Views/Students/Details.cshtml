@@ -1,0 +1,21 @@
+
+@model Models.Student
+@{
+    ViewBag.PageTitle = "Étudiant - Détails";
+}
+
+<div id="studentDetailsContainer">
+</div>
+
+@section Scripts {
+    <script>
+        $(() => {
+            let studentDetailsAutoRefreshPanel =
+                new AutoRefreshedPanel(
+                    "studentDetailsContainer",
+                    "/Students/GetStudentDetails",
+                    5
+                );
+        })
+    </script>
+}

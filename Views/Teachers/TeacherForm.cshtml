@@ -1,0 +1,62 @@
+@model Models.Teacher
+
+@{
+    bool creating = ViewBag.Creating != null ? (bool)ViewBag.Creating : false;
+    string sessionCourante = Models.NextSession.Caption;
+}
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    @Html.HiddenFor(model => model.Code)
+    @Html.HiddenFor(model => model.StartDate)
+    @Html.HiddenFor(model => model.Email)
+
+    <div class="section roundedBorder">
+        <details open>
+            <summary>Informations @(!creating ? " - [" + Model.Code + "]" : "")</summary>
+            <hr />
+            @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+            <div class="form-group mb-2">
+                @Html.LabelFor(model => model.FirstName, "Prénom", new { @class = "control-label fw-bold" })
+                @Html.EditorFor(model => model.FirstName, new { htmlAttributes = new { @class = "form-control" } })
+            </div>
+
+            <div class="form-group mb-2">
+                @Html.LabelFor(model => model.LastName, "Nom", new { @class = "control-label fw-bold" })
+                @Html.EditorFor(model => model.LastName, new { htmlAttributes = new { @class = "form-control" } })
+            </div>
+
+            <div class="form-group mb-2">
+                @Html.LabelFor(model => model.StartDate, "Date d'embauche", new { @class = "control-label fw-bold" })
+                @Html.EditorFor(model => model.StartDate, new { htmlAttributes = new { @class = "form-control", type = "date" } })
+            </div>
+
+
+            <div class="form-group mb-2">
+                @Html.LabelFor(model => model.Phone, "Téléphone", new { @class = "control-label fw-bold" })
+                @Html.EditorFor(model => model.Phone, new { htmlAttributes = new { @class = "form-control" } })
+            </div>
+
+            <div class="form-group mb-2">
+                @Html.LabelFor(model => model.Avatar, "Avatar", new { @class = "control-label fw-bold" })
+                @Helper.ImageUploader("Avatar", Model.Avatar, "Cliquez glisser une photo")
+            </div>
+        </details>
+    </div>
+
+    if (!creating)
+    {
+        <div class="section roundedBorder mt-3">
+            <details open>
+                <summary>Allocations: @sessionCourante</summary>
+
+                @Helper.SelectionLists("selectedCoursesId", (System.Web.Mvc.SelectList)ViewBag.Allocations, (System.Web.Mvc.SelectList)ViewBag.Courses)
+            </details>
+        </div>
+    }
+
+    <input id="submit" type="submit" value="Enregistrer" class="btn btn-primary" style="display:none" >
+}

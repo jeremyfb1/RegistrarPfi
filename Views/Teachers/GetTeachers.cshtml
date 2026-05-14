@@ -1,0 +1,15 @@
+@model IEnumerable<Models.Teacher>
+@{
+    int count = Model.Count();
+    List<Models.Teacher> teachers = Model.OrderBy(t => t.LastName).ToList();
+    string searchStr = ViewBag.Search != null ? ViewBag.Search.ToString().ToLower() : "";
+}
+
+@foreach (var teacher in teachers)
+{
+    <a href="/Teachers/Details/@teacher.Id" class="TeacherListLayout">
+        <span><img src="@teacher.Avatar" class="UserSmallAvatar" /></span>
+        <span class="teacherCode">@teacher.Code</span>
+        <span>@teacher.FullName</span>
+    </a>
+}

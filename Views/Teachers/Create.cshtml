@@ -1,0 +1,16 @@
+@model Models.Teacher
+
+@{
+    ViewBag.Action = "Create";
+    ViewBag.PageTitle = "Prof - Ajout";
+    ViewBag.Creating = true;
+    Html.RenderPartial("TeacherForm");
+}
+
+@section Scripts {
+    <script>
+        $(() => {
+            initFormValidation();
+        });
+    </script>
+}

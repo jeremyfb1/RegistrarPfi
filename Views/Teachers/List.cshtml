@@ -1,0 +1,40 @@
+@{
+    ViewBag.Title = "Liste des professeurs";
+    Session["Search"] = true;
+}
+
+<div id="teachersContainer" ></div>
+
+
+
+@section Scripts {
+    <script>
+        $(() => {
+            let teachersListAutoRefreshPanel =
+                new AutoRefreshedPanel(
+                    "teachersContainer",
+                    "/Teachers/GetTeachers",
+                    5);
+
+            let keywordsOnchangeTimer = null;
+
+            $("#searchInput").on('keyup', function () {
+                clearTimeout(keywordsOnchangeTimer);
+                /* delay request by 0.5 seconds */
+                keywordsOnchangeTimer = setTimeout(() => {
+                    window.location = "/Teachers/SetSearchString?value=" + $("#searchInput").val();
+                }, 1000 /* 1 seconds */);
+            });
+            $("#searchInput").on('search', function () { /* click on clear */
+                clearTimeout(keywordsOnchangeTimer);
+                window.location = "/Teachers/SetSearchString?value=" + $("#searchInput").val();
+            });
+            $("#searchInput").on("focus", function () {
+                teachersListAutoRefreshPanel.pause();
+            });
+            $("#searchInput").on("blur", function () {
+                teachersListAutoRefreshPanel.restart();
+            });
+        });
+    </script>
+}

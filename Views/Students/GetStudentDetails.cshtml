@@ -1,0 +1,75 @@
+@model Models.Student
+
+@if (Model == null)
+{
+    <div class="alert alert-danger">Étudiant introuvable.</div>
+    return;
+}
+
+<details id="details_student_info" class="cohort-details" open>
+    <summary class="cohort-summary student-details-summary" style="display: list-item;">
+        <i class="fa fa-graduation-cap"></i> @Model.FirstName @Model.LastName
+    </summary>
+
+    <div class="student-info">
+        <div class="student-info-item"><i class="fa fa-barcode"></i> @Model.Code</div>
+        <div class="student-info-item"><i class="fa fa-phone"></i> @Model.Phone</div>
+        <div class="student-info-item"><i class="fa fa-paper-plane"></i> <a href="mailto:@Model.Email">@Model.Email</a></div>
+        <div class="student-info-item"><i class="fa fa-cake-candles"></i> @Model.BirthDate.ToString("d MMMM yyyy")</div>
+    </div>
+</details>
+
+<hr />
+
+<h3 class="student-sections-title">Inscriptions</h3>
+
+@{
+    // On récupère les inscriptions (registrations) de cet étudiant depuis la BD
+    var registrations = DAL.DB.Registrations.ToList()
+                        .Where(r => r.StudentId == Model.Id)
+                        .OrderByDescending(r => r.Year)
+                        .ToList();
+}
+
+@if (registrations.Any())
+{
+    int count = registrations.Count();
+    int index = 0;
+
+    while (index < count)
+    {
+        int currentYear = registrations[index].Year;
+        string open = index == 0 ? "open" : "";
+
+        <details id="details_year_@currentYear" @open class="cohort-details">
+            <summary class="cohort-summary" style="display: list-item;">@currentYear</summary>
+            <div class="courses-list-container">
+                @do
+                {
+                    var reg = registrations[index];
+                    // On va chercher les détails du cours associé à cette inscription
+                    var course = DAL.DB.Courses.Get(reg.CourseId);
+
+                    if (course != null)
+                    {
+                        <a href="/Courses/Details/@course.Id" class="student-row course-row">
+                            <span class="course-session" style="color: gray">[@course.Session]</span>
+                            <span class="courseCode">@course.Code</span>
+                            <span class="course-title" style="font-family:'Times New Roman'">@course.Title</span>
+                        </a>
+                        <br/>
+                    }
+
+                    index++;
+
+                } while (index < count && registrations[index].Year == currentYear);
+            </div>
+        </details>
+    }
+}
+else
+{
+    <div class="empty-courses-message">
+        <i class="fa fa-info-circle"></i> Cet étudiant n'a aucune inscription pour le moment.
+    </div>
+}
