@@ -1,0 +1,16 @@
+@{
+    List<int> yearsList = Session["StudentsYearsList"] != null
+                          ? ((List<int>)Session["StudentsYearsList"]).OrderByDescending(i => i).ToList()
+                          : new List<int>();
+    string selectedYear = Session["SelectedYear"] != null ? Session["SelectedYear"].ToString() : "";
+}
+
+<select id="yearSelect" class="form-control" onchange="window.location='/Students/SetSearchCategory?value=' + this.value">
+    <option value="">Toutes les années</option>
+    @foreach (int year in yearsList)
+    {
+        string selected = year.ToString() == selectedYear ? "selected" : "";
+        <option value="@year" @selected>@year</option>
+    }
+
+</select>

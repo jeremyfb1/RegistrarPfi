@@ -1,45 +1,51 @@
-﻿﻿@model IEnumerable<Models.Course>
+﻿@model IEnumerable<Models.Course>
+
+@helper Highlight(string text, string search)
+{
+    if (string.IsNullOrEmpty(search) || string.IsNullOrEmpty(text))
+    {
+        @text
+    }
+    else
+    {
+        string pattern = System.Text.RegularExpressions.Regex.Escape(search);
+        // On utilise de simples guillemets pour le style HTML, c'est ce qui passe le mieux
+        string result = System.Text.RegularExpressions.Regex.Replace(text, pattern, "<span style='background-color: yellow;'>$&</span>", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        @Html.Raw(result)
+    }
+}
+
 @{
+    string currentSearch = ViewBag.Search != null ? ViewBag.Search.ToString() : "";
 
     var sessions = new List<int>();
     if (Session["CoursesSessionsList"] != null)
     {
         sessions = ((List<int>)Session["CoursesSessionsList"]).OrderBy(i => i).ToList();
-    }}
-@foreach (int session in sessions)
-{
-    var coursesList = Model.Where(c => c.Session == session).OrderBy(c => c.Code).ToList();
-    if (coursesList.Count() > 0)
-    {
-        <details id="course_details_@session">
-            <summary>Session @session </summary>
-            @foreach (var item in coursesList)
-            {
-                <div class="CoursesListLayout">
-                    <a href="@Url.Action("Details", new { id = item.Id })">
-                        <div style="display:flex">
-                            <span class="courseCode">@item.Code</span>
-                            <div>@item.Title</div>
-                        </div>
-                    </a>
-                </div>
-            }
-        </details>
     }
 }
 
-
-
-﻿
-
-
-
-
-
-
-
-
-
-
-
-
+@if (Model != null)
+{
+    foreach (int session in sessions)
+    {
+        var coursesList = Model.Where(c => c.Session == session).OrderBy(c => c.Code).ToList();
+        if (coursesList.Count() > 0)
+        {
+            <details id="coursedetails@session">
+                <summary>Session @session </summary>
+                @foreach (var item in coursesList)
+                {
+                    <div class="CoursesListLayout">
+                        <a href="@Url.Action("Details", new { id = item.Id })">
+                            <div style="display:flex">
+                                <span class="courseCode">@Highlight(item.Code, currentSearch)</span>
+                                <div>@Highlight(item.Title, currentSearch)</div>
+                            </div>
+                        </a>
+                    </div>
+                }
+            </details>
+        }
+    }
+}

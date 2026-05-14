@@ -14,20 +14,26 @@ namespace Controllers
     {
         private void InitSessionVariables()
         {
-            if (Session["CurrentCourseId"] == null)  Session["CurrentCourseId"] = 0;
-            
+            if (Session["CurrentCourseId"] == null) Session["CurrentCourseId"] = 0;
+            if (Session["Search"] == null) Session["Search"] = false;
+            if (Session["SearchString"] == null) Session["SearchString"] = "";
         }
 
 
 
         public ActionResult List()
         {
+            InitSessionVariables();
             return View();
         }
-        public ActionResult GetCourses(bool forceRefresh = false, string searchString = "")
+        public ActionResult GetCourses(bool forceRefresh = false)
         {
             try
             {
+
+                bool searchActive = Session["Search"] != null ? (bool)Session["Search"] : false;
+                string searchString = Session["SearchString"]?.ToString() ?? "";
+
                 bool searchChanged = Session["LastSearch"]?.ToString() != searchString;
 
                 if (DB.Users.HasChanged || DB.Students.HasChanged || DB.Teachers.HasChanged || DB.Courses.HasChanged || forceRefresh || searchChanged)
@@ -35,7 +41,8 @@ namespace Controllers
                     Session["LastSearch"] = searchString;
                     var courses = DB.Courses.ToList();
 
-                    if (!string.IsNullOrEmpty(searchString))
+
+                    if (searchActive && !string.IsNullOrEmpty(searchString))
                     {
                         searchString = searchString.ToLower();
                         courses = courses.Where(c => c.Title.ToLower().Contains(searchString) || c.Code.ToLower().Contains(searchString)).ToList();
@@ -43,6 +50,7 @@ namespace Controllers
 
                     var sessionsList = courses.Select(c => c.Session).Distinct().ToList();
                     Session["CoursesSessionsList"] = sessionsList;
+
                     ViewBag.Search = searchString;
 
                     return PartialView(courses);
@@ -55,7 +63,6 @@ namespace Controllers
                 Debug.WriteLine(ex.Message);
                 return Content("Erreur interne " + ex.Message);
             }
-
         }
 
         public ActionResult Details(int id)
@@ -132,6 +139,7 @@ namespace Controllers
 
             return Redirect("/Accounts/Login?message=Accès illégal! &success=false");
         }
+        [UserAccess(Models.Access.Write)]
 
         public ActionResult Create()
         {
@@ -166,6 +174,40 @@ namespace Controllers
             course.DeleteNextSessionAllocations();
             DB.Courses.Delete(id);
 
+            return RedirectToAction("List");
+        }
+
+        public ActionResult SetYear()
+        {
+            ViewBag.PageTitle = "Session courante";
+            ViewBag.Year = NextSession.Year;
+            ViewBag.Session = NextSession.ValidSessions.Contains(1) ? "Automne" : "Hiver";
+            return View();
+        }
+
+        [HttpPost]
+        public ActionResult SetYear(int year, string session)
+        {
+            NextSession.CurrentDate = new DateTime(year, (session == "Automne" ? 8 : 1), 15);
+            return RedirectToAction("Index");
+        }
+
+        public ActionResult ToggleSearch()
+        {
+            ResetMediasPaging();
+            if (Session["Search"] == null) Session["Search"] = false;
+            Session["Search"] = !(bool)Session["Search"];
+            return RedirectToAction("List");
+        }
+        private void ResetMediasPaging()
+        {
+            Session["pageNum"] = 1;
+            Session["EndOfMedias"] = false;
+        }
+        public ActionResult SetSearchString(string value)
+        {
+            ResetMediasPaging();
+            Session["SearchString"] = value.ToLower();
             return RedirectToAction("List");
         }
     }

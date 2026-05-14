@@ -21,7 +21,7 @@
 
 <div class="section roundedBorder">
     <div class="headerMenu" style="display: flex; align-items: center; width: 100%;">
-        <a class="siteIcon" href="/@controller/list" ></a>
+        <a class="siteIcon" href="/@controller/list"></a>
 
         @switch (action)
         {
@@ -37,7 +37,7 @@
                     {
                         <a href="/@controller/Create" class="cmdIcon fa fa-circle-plus" style="color: #0d6efd;" title="Ajouter..."></a>
                     }
-                    <a href="/@controller/ToggleSearch" id="cmdToggleSearch" class="cmdIcon fa fa-search" style="color: #0d6efd;" title="Recherche..."></a>
+                    <a href="@Url.Action("ToggleSearch", controller)" id="cmdToggleSearch" class="cmdIcon fa fa-search" style="color: #0d6efd;" title="Recherche..."></a>
 
                     <div id="menu" class="dropdown ms-auto" style="display: inline-block;">
                         <div data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;">
@@ -124,6 +124,13 @@
                     <a class="cmdIcon fa fa-square-xmark" title="Annuler" onclick="history.back()"></a>
                 </div>
                 break;
+            case "setyear":
+                <div class="pageTitle">@pageTitle</div>
+                <div id="mainMenuPanel" class="menu ms-auto">
+                    <i class="cmdIcon submitCmd fa fa-circle-check" title="Soumettre" onclick="document.getElementById('submit').click()"></i>
+                    <a href="/@controller/List" class="cmdIcon fa fa-square-xmark" title="Annuler"></a>
+                </div>
+                break;
 
             case "loginsjournal":
             case "eventsjournal":
@@ -141,3 +148,21 @@
         }
     </div>
 </div>
+
+@if (search && action == "list" && (controller == "students" || controller == "courses" || controller == "teachers"))
+{
+    <div class="flex" style="margin-top: 10px; padding: 10px; background-color: #f8f9fa; display: flex; gap: 15px; align-items: center;">
+
+        <input type="search" id="searchInput" class="section roundedBorder flexItem form-control"
+               value="@searchString" placeholder="Recherche..."
+               onsearch="window.location='/@controller/SetSearchString?value=' + this.value"
+               style="max-width: 300px;">
+
+        @if (controller == "students")
+        {
+            <div id="categorySelectPanel">
+                @{ Html.RenderPartial("GetStudentsCategoriesList"); }
+            </div>
+        }
+    </div>
+}

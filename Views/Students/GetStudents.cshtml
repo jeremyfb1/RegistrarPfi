@@ -1,33 +1,44 @@
-﻿﻿@model IEnumerable<Models.Student>
-@{
+﻿@model IEnumerable<Models.Student>
 
-    /* List of years wich has at least one subscribed student */
-    var yearsList = ((List<int>)Session["StudentsYearsList"]).OrderByDescending(i => i);
+@helper Highlight(string text, string search)
+{
+    if (string.IsNullOrEmpty(search) || string.IsNullOrEmpty(text))
+    {
+        @text
+    }
+    else
+    {
+        string pattern = System.Text.RegularExpressions.Regex.Escape(search);
+        string result = System.Text.RegularExpressions.Regex.Replace(text, pattern, "<span style='background-color: yellow;'>$&</span>", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        @Html.Raw(result)
+    }
 }
+
+@{
+    string currentSearch = ViewBag.Search != null ? ViewBag.Search.ToString() : "";
+
+    var rawList = Session["StudentsYearsList"] as List<int>;
+    var yearsList = rawList != null ? rawList.OrderByDescending(i => i) : new List<int>().OrderByDescending(i => i);
+}
+
 @foreach (int year in yearsList)
 {
     var students = Model.Where(s => s.Year == year);
     if (students.Count() > 0)
     {
-        <details id="student_details_@year">
+        <details id="studentdetails@year">
             <summary>Cohorte @year </summary>
-                @foreach (var item in students)
-                {
-                    <div class="StudentListLayout">
-                        <a href="@Url.Action("Details", new { id = item.Id })">
-                            <div style="display:flex">
-                                <span class="studentCode">@item.Code</span>
-                                <div class="studentName">@item.FullName</div>
-                            </div>
-                        </a>
-                    </div>
-                }
+            @foreach (var item in students)
+            {
+                <div class="StudentListLayout">
+                    <a href="@Url.Action("Details", new { id = item.Id })">
+                        <div style="display:flex">
+                            <span class="studentCode">@Highlight(item.Code, currentSearch)</span>
+                            <div class="studentName">@Highlight(item.FullName, currentSearch)</div>
+                        </div>
+                    </a>
+                </div>
+            }
         </details>
     }
 }
-
-
-
-
-
-

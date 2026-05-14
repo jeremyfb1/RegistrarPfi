@@ -1,15 +1,38 @@
 @model IEnumerable<Models.Teacher>
-@{
-    int count = Model.Count();
-    List<Models.Teacher> teachers = Model.OrderBy(t => t.LastName).ToList();
-    string searchStr = ViewBag.Search != null ? ViewBag.Search.ToString().ToLower() : "";
+
+@helper Highlight(string text, string search)
+{
+    if (string.IsNullOrEmpty(search) || string.IsNullOrEmpty(text))
+    {
+        @text
+    }
+    else
+    {
+        string pattern = System.Text.RegularExpressions.Regex.Escape(search);
+        string result = System.Text.RegularExpressions.Regex.Replace(text, pattern, "<span style='background-color: yellow;'>$&</span>", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        @Html.Raw(result)
+    }
 }
 
-@foreach (var teacher in teachers)
+@{
+    string searchStr = ViewBag.Search != null ? ViewBag.Search.ToString().ToLower() : "";
+
+    List<Models.Teacher> teachers = new List<Models.Teacher>();
+    if (Model != null)
+    {
+        teachers = Model.OrderBy(t => t.LastName).ToList();
+    }
+}
+
+@if (Model != null && teachers.Count > 0)
 {
-    <a href="/Teachers/Details/@teacher.Id" class="TeacherListLayout">
-        <span><img src="@teacher.Avatar" class="UserSmallAvatar" /></span>
-        <span class="teacherCode">@teacher.Code</span>
-        <span>@teacher.FullName</span>
-    </a>
+    foreach (var teacher in teachers)
+    {
+        <a href="/Teachers/Details/@teacher.Id" class="TeacherListLayout">
+            <span><img src="@teacher.Avatar" class="UserSmallAvatar" /></span>
+
+            <span class="teacherCode">@Highlight(teacher.Code, searchStr)</span>
+            <span>@Highlight(teacher.FullName, searchStr)</span>
+        </a>
+    }
 }

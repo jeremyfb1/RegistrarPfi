@@ -249,6 +249,7 @@
     <Content Include="Views\Accounts\LoginsJournal.cshtml" />
     <Content Include="Views\Accounts\ManageUsers.cshtml" />
     <Content Include="Views\Accounts\GetUsers.cshtml" />
+    <None Include="Properties\PublishProfiles\RegistrarPfi20260514111153 - Web Deploy.pubxml" />
     <None Include="Properties\PublishProfiles\Wikimedia-2026 - Web Deploy.pubxml" />
     <Content Include="Views\Students\List.cshtml" />
     <Content Include="Views\Students\GetStudents.cshtml" />
@@ -271,6 +272,10 @@
     <Content Include="Views\Courses\Create.cshtml" />
     <Content Include="Views\Courses\Edit.cshtml" />
     <Content Include="Views\Courses\CourseForm.cshtml" />
+    <Content Include="Views\Teachers\SetYear.cshtml" />
+    <Content Include="Views\Students\SetYear.cshtml" />
+    <Content Include="Views\Courses\SetYear.cshtml" />
+    <Content Include="Views\Students\GetStudentsCategoriesList.cshtml" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

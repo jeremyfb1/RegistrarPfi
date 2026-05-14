@@ -12,22 +12,34 @@ namespace Controllers
     public class StudentsController : Controller
     {
 
+
         private void InitSessionVariables()
         {
             if (Session["CurrentStudentId"] == null) Session["CurrentStudentId"] = 0;
+            if (Session["Search"] == null) Session["Search"] = false;
+            if (Session["SearchString"] == null) Session["SearchString"] = "";
+            if (Session["SelectedYear"] == null) Session["SelectedYear"] = "";
 
         }
+
 
 
 
         public ActionResult List()
         {
+            InitSessionVariables();
             return View();
         }
-        public ActionResult GetStudents(bool forceRefresh = false, string searchString = "")
+        public ActionResult GetStudents(bool forceRefresh = false)
         {
             try
             {
+                InitSessionVariables();
+                bool searchActive = Session["Search"] != null ? (bool)Session["Search"] : false;
+                string searchString = Session["SearchString"]?.ToString() ?? "";
+
+                string selectedCategory = Session["SelectedYear"]?.ToString() ?? "";
+
                 bool searchChanged = Session["LastSearch"]?.ToString() != searchString;
 
                 if (DB.Users.HasChanged || DB.Students.HasChanged || DB.Teachers.HasChanged || DB.Courses.HasChanged || forceRefresh || searchChanged)
@@ -35,15 +47,25 @@ namespace Controllers
                     Session["LastSearch"] = searchString;
                     var students = DB.Students.ToList();
 
-                    if (!string.IsNullOrEmpty(searchString))
-                    {
-                        searchString = searchString.ToLower();
-                        students = students.Where(s => s.FullName.ToLower().Contains(searchString) || s.Code.ToLower().Contains(searchString)).ToList();
-                    }
-                    var yearsList = students.Select(s => s.Year).Distinct().ToList();
+                    var yearsList = students.Select(s => s.Year).Distinct().OrderByDescending(y => y).ToList();
                     Session["StudentsYearsList"] = yearsList;
-                    ViewBag.Search = searchString;
 
+                    if (searchActive)
+                    {
+                        if (!string.IsNullOrEmpty(searchString))
+                        {
+                            searchString = searchString.ToLower();
+                            students = students.Where(s => s.FullName.ToLower().Contains(searchString) || s.Code.ToLower().Contains(searchString)).ToList();
+                        }
+
+                        if (!string.IsNullOrEmpty(selectedCategory))
+                        {
+                            int yearFilter = int.Parse(selectedCategory);
+                            students = students.Where(s => s.Year == yearFilter).ToList();
+                        }
+                    }
+
+                    ViewBag.Search = searchString;
                     return PartialView(students);
                 }
 
@@ -92,7 +114,7 @@ namespace Controllers
         {
             int id = Session["CurrentStudentId"] != null ? (int)Session["CurrentStudentId"] : 0;
             if (id == 0) return RedirectToAction("List");
-            
+
             Student student = DB.Students.Get(id);
 
             if (student != null)
@@ -102,7 +124,7 @@ namespace Controllers
                 ViewBag.Registrations = student.NextSessionCoursesToSelectList;
                 var nextSessionCourses = DB.Courses.ToList()
                     .Where(c => Models.NextSession.ValidSessions.Contains(c.Session))
-                    .OrderBy(c => c.Session) 
+                    .OrderBy(c => c.Session)
                     .ToList();
 
                 ViewBag.Courses = SelectListUtilities<Course>.Convert(nextSessionCourses, "Caption");
@@ -131,6 +153,7 @@ namespace Controllers
 
             return Redirect("/Accounts/Login?message=Accès illégal! &success=false");
         }
+        [UserAccess(Models.Access.Write)]
 
         public ActionResult Create()
         {
@@ -167,7 +190,49 @@ namespace Controllers
             return RedirectToAction("List");
         }
 
+        public ActionResult SetYear()
+        {
+            ViewBag.PageTitle = "Session courante";
+            ViewBag.Year = NextSession.Year;
+            ViewBag.Session = NextSession.ValidSessions.Contains(1) ? "Automne" : "Hiver";
+            return View();
+        }
 
+        [HttpPost]
+        public ActionResult SetYear(int year, string session)
+        {
+            NextSession.CurrentDate = new DateTime(year, (session == "Automne" ? 8 : 1), 15);
+            return RedirectToAction("List");
+        }
+        public ActionResult ToggleSearch()
+        {
+            ResetMediasPaging();
+            if (Session["Search"] == null) Session["Search"] = false;
+            Session["Search"] = !(bool)Session["Search"];
+            return RedirectToAction("List");
+        }
 
+        private void ResetMediasPaging()
+        {
+            Session["pageNum"] = 1;
+            Session["EndOfMedias"] = false;
+        }
+        public ActionResult SetSearchString(string value)
+        {
+            ResetMediasPaging();
+            Session["SearchString"] = value.ToLower();
+            return RedirectToAction("List");
+        }
+        public ActionResult GetStudentsCategoriesList()
+        {
+            var years = Session["StudentsYearsList"] as List<int> ?? new List<int>();
+            return PartialView(years);
+        }
+
+        public ActionResult SetSearchCategory(string value)
+        {
+            Session["SelectedYear"] = value;
+            return RedirectToAction("List");
+        }
     }
 }

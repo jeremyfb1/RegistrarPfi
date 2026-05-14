@@ -1,0 +1,26 @@
+@{
+    string session = ViewBag.Session;
+    int year = (int)ViewBag.Year;
+    bool automnCheck = session == "Automne";
+}
+<form action="/Students/SetYear" method="post">
+    <div style="color:dodgerblue;font-size:1.0em;">Choisissez l'année et la session pour les prochaines allocations de cours : </div>
+    <hr />
+    <label for="year">Année</label>
+    <input type="number" min="1990"
+           max="@DateTime.Now.Year"
+           value="@year"
+           class="form-control"
+           name="year" id="year" />
+
+    <fieldset>
+        <legend>Session</legend>
+
+        <div style="display:grid; grid-template-columns:20px auto; align-items:last baseline">
+            <input type="radio" name="session" value="Automne" id="session_automne" class="" @(automnCheck ? "checked" : "") />
+            <label for="session_automne">Automne</label>
+            <input type="radio" name="session" value="Hiver" id="session_hiver" class="" @(!automnCheck ? "checked" : "") />
+            <label for="session_hiver">Hiver</label>
+        </div>
+    </fieldset>
+</form>
