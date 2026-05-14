@@ -178,6 +178,7 @@ namespace Controllers
             return RedirectToAction("List");
         }
 
+        [UserAccess(Models.Access.Write)]
         public ActionResult SetYear()
         {
             ViewBag.PageTitle = "Session courante";
@@ -187,6 +188,7 @@ namespace Controllers
         }
 
         [HttpPost]
+        [UserAccess(Models.Access.Write)]
         public ActionResult SetYear(int year, string session)
         {
             NextSession.CurrentDate = new DateTime(year, (session == "Automne" ? 8 : 1), 15);
