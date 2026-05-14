@@ -206,6 +206,7 @@ namespace Controllers
         }
         public ActionResult ToggleSearch()
         {
+            InitSessionVariables();
             ResetMediasPaging();
             if (Session["Search"] == null) Session["Search"] = false;
             Session["Search"] = !(bool)Session["Search"];

@@ -31,7 +31,8 @@ namespace Controllers
             try
             {
 
-                bool searchActive = Session["Search"] != null ? (bool)Session["Search"] : false;
+                bool search = (Session["Search"] != null && (bool)Session["Search"]);
+
                 string searchString = Session["SearchString"]?.ToString() ?? "";
 
                 bool searchChanged = Session["LastSearch"]?.ToString() != searchString;
@@ -42,7 +43,7 @@ namespace Controllers
                     var courses = DB.Courses.ToList();
 
 
-                    if (searchActive && !string.IsNullOrEmpty(searchString))
+                    if (search && !string.IsNullOrEmpty(searchString))
                     {
                         searchString = searchString.ToLower();
                         courses = courses.Where(c => c.Title.ToLower().Contains(searchString) || c.Code.ToLower().Contains(searchString)).ToList();
@@ -194,9 +195,10 @@ namespace Controllers
 
         public ActionResult ToggleSearch()
         {
+            InitSessionVariables();
             ResetMediasPaging();
-            if (Session["Search"] == null) Session["Search"] = false;
             Session["Search"] = !(bool)Session["Search"];
+            if (!(bool)Session["Search"]) Session["SearchString"] = "";
             return RedirectToAction("List");
         }
         private void ResetMediasPaging()
@@ -206,8 +208,10 @@ namespace Controllers
         }
         public ActionResult SetSearchString(string value)
         {
+            InitSessionVariables();
             ResetMediasPaging();
             Session["SearchString"] = value.ToLower();
+            Session["Search"] = true;
             return RedirectToAction("List");
         }
     }

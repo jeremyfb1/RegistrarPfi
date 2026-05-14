@@ -103,14 +103,20 @@ namespace Controllers
 
             if (teacher != null)
             {
-
                 Session["code"] = teacher.Code;
-                ViewBag.Allocations = teacher.NextSessionCoursesToSelectList;
+
+                var coursesAssignedToOthers = DB.Allocations.ToList()
+                    .Where(a => a.TeacherId != teacher.Id)
+                    .Select(a => a.CourseId)
+                    .ToList();
+
                 var nextSessionCourses = DB.Courses.ToList()
                     .Where(c => Models.NextSession.ValidSessions.Contains(c.Session))
+                    .Where(c => !coursesAssignedToOthers.Contains(c.Id))
                     .OrderBy(c => c.Session)
                     .ToList();
 
+                ViewBag.Allocations = teacher.NextSessionCoursesToSelectList; 
                 ViewBag.Courses = SelectListUtilities<Course>.Convert(nextSessionCourses, "Caption");
 
                 return View(teacher);
@@ -124,9 +130,20 @@ namespace Controllers
         [UserAccess(Access.Write)]
         public ActionResult Edit(Teacher teacher, List<int> selectedCoursesId)
         {
+            if (selectedCoursesId != null)
+            {
+                selectedCoursesId.RemoveAll(courseId =>
+                    DB.Allocations.ToList().Any(a => a.CourseId == courseId && a.TeacherId != teacher.Id)
+                );
+            }
+            else
+            {
+                selectedCoursesId = new List<int>();
+            }
 
             teacher.Id = (int)Session["CurrentTeacherId"];
             teacher.Code = (string)Session["code"];
+
             if (teacher.IsValid())
             {
                 DB.Teachers.Update(teacher);
@@ -191,6 +208,7 @@ namespace Controllers
 
         public ActionResult ToggleSearch()
         {
+            InitSessionVariables();
             ResetMediasPaging();
             if (Session["Search"] == null) Session["Search"] = false;
             Session["Search"] = !(bool)Session["Search"];

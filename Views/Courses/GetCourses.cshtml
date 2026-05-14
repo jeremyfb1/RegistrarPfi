@@ -32,7 +32,7 @@
         var coursesList = Model.Where(c => c.Session == session).OrderBy(c => c.Code).ToList();
         if (coursesList.Count() > 0)
         {
-            <details id="coursedetails@session">
+            <details id="coursedetails_@(session)">
                 <summary>Session @session </summary>
                 @foreach (var item in coursesList)
                 {

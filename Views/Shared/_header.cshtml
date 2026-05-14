@@ -2,7 +2,7 @@
     string controller = HttpContext.Current.Request.RequestContext.RouteData.Values["controller"].ToString().ToLower();
     string action = HttpContext.Current.Request.RequestContext.RouteData.Values["action"].ToString().ToLower();
 
-    bool search = Session["Search"] != null ? (bool)Session["Search"] : false;
+    bool search = (Session["Search"] != null && (bool)Session["Search"]);
     string searchString = Session["SearchString"] != null ? (string)Session["SearchString"] : "";
 
     int currentId = Session["CurrentId"] != null ? (int)Session["CurrentId"] : 0;
